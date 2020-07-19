@@ -7,6 +7,7 @@ using System.Web.Mvc;
 using TCAdmin.GameHosting.SDK.Objects;
 using TCAdmin.SDK.Database;
 using TCAdmin.SDK.Web.MVC.Controllers;
+using TCAdmin.TaskScheduler.ModuleApi;
 using TCAdmin.TaskScheduler.SDK.Objects;
 using TCAdminBatchSteamUpdate.HttpResponses;
 using TCAdminBatchSteamUpdate.Models;
@@ -57,25 +58,15 @@ namespace TCAdminBatchSteamUpdate.Controllers
         {
             var user = TCAdmin.SDK.Session.GetCurrentUser();
 
-            var rTask = new RecurringTask
+            var taskInfo = new TaskInfo
             {
+                CreatedBy = user.UserId,
+                RunNow = true,
                 UserId = user.UserId,
-                Name = "Batch Steam Update",
-                Enabled = true,
-                Source = this.GetType().Name,
-                SourceId = "-1",
-                Notes = "Created by Steam Batch Update",
+                DisplayName = $"Batch Steam Update",
+                Source = this.GetType().ToString(),
+                SourceId = "-1"
             };
-
-            var trigger = new Trigger
-            {
-                TriggerType = TriggerType.OneTime,
-                OneTime = new TriggerOneTime
-                {
-                    StartTimeUtc = DateTime.UtcNow
-                }
-            };
-            rTask.Triggers = new[] {trigger};
 
             foreach (var service in services)
             {
@@ -88,24 +79,21 @@ namespace TCAdminBatchSteamUpdate.Controllers
                     ["ScheduledScript.SkipExecution"] = false,
                     ["ScheduledScript.CheckSteamApiUpdate"] = false
                 };
-                var step = new RecurringStep
+                var step = new StepInfo
                 {
                     ModuleId = "d3b2aa93-7e2b-4e0d-8080-67d14b2fa8a9",
                     ProcessId = 18,
                     ServerId = service.ServerId,
                     Arguments = arguments.ToString(),
+                    DisplayName = $"Updating {service.ConnectionInfo} via Steam Update"
                 };
-
-                var steps = rTask.Steps.ToList();
-                steps.Add(step);
-                rTask.Steps = steps.ToArray();
+                taskInfo.AddStep(step);
             }
 
-            rTask.GenerateKey();
-            rTask.Save();
-            rTask.ScheduleNextTask();
+            var task = new Task(taskInfo.CreateTask().TaskId);
+            task.Start();
 
-            return new Task(rTask.TaskId);
+            return task;
         }
     }
 }
