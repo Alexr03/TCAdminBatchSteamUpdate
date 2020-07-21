@@ -17,6 +17,7 @@
             @using (Ajax.BeginForm("UpdateServices", "SteamUpdate", new AjaxOptions {OnSuccess = "onReceived", OnFailure = "onReceived", HttpMethod = "Post"}))
             {
                 <label for="serviceIds">Check all services that you want to update:</label>
+                <input type="button" value="Check All" id="checkButton" onclick="toggleCheckAll()" class="k-button" />
                 @(Html.Kendo().TreeView()
                     .Name("serviceIds")
                     .Checkboxes(true)
@@ -44,6 +45,18 @@
         
         if(e.url){
             TCAdmin.Ajax.ShowUrlDialog('Steam Update', e.url, function(){ }, 600, 250);
+        }
+    }
+    
+    function toggleCheckAll(){
+        const checkButtonValue = $("#checkButton").val();
+        
+        if(checkButtonValue === "Uncheck All"){
+          $("#serviceIds .k-checkbox-wrapper input").prop("checked", false).trigger("change");
+          $("#checkButton").val("Check All");
+        } else {
+          $("#serviceIds .k-checkbox-wrapper input").prop("checked", true).trigger("change");
+          $("#checkButton").val("Uncheck All");
         }
     }
 </script>
