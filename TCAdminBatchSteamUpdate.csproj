@@ -194,6 +194,7 @@
       <Content Include="install.sql" />
       <Content Include="Module.json" />
       <Content Include="uninstall.sql" />
+      <Content Include="Views\Shared\Main.Plugin.BatchSteamUpdate.cshtml" />
       <Content Include="Views\Shared\Main.Plugin.BatchSteamUpdate.css" />
       <Content Include="Views\TCAdminBatchSteamUpdate.Controllers\SteamUpdate\Index.cshtml" />
     </ItemGroup>
