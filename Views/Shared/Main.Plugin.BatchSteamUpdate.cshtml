@@ -2,7 +2,7 @@
 @using Service = TCAdmin.GameHosting.SDK.Objects.Service
 @{
     var user = TCAdmin.SDK.Session.GetCurrentUser();
-    var anySteamGames = false;
+    var anySteamGames = true;
     if (user.UserType == UserType.User)
     {
         var services = Service.GetGameServices().Cast<Service>().ToList();
