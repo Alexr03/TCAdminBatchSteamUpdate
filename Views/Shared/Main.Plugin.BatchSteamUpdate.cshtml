@@ -1,12 +1,13 @@
-﻿@using TCAdmin.SDK.Objects
+﻿@using TCAdmin.GameHosting.SDK.Objects
+@using TCAdmin.SDK.Objects
 @using Service = TCAdmin.GameHosting.SDK.Objects.Service
 @{
     var user = TCAdmin.SDK.Session.GetCurrentUser();
     var anySteamGames = true;
-    if (user.UserType == UserType.User)
+    if (user.UserType == UserType.Admin)
     {
         var services = Service.GetGameServices().Cast<Service>().ToList();
-        anySteamGames = services.Any(x => x.Steam.EnableSteamCmd);
+        anySteamGames = services.Any(x => x.Steam.EnableSteamCmd || x.Steam.EnableSteamUpdateTool);
     }
 }
 
