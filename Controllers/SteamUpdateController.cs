@@ -54,7 +54,7 @@ namespace TCAdminBatchSteamUpdate.Controllers
             }, HttpStatusCode.OK);
         }
 
-        private Task ScheduleSteamUpdates(List<Service> services)
+        private TCAdmin.TaskScheduler.SDK.Objects.Task ScheduleSteamUpdates(List<Service> services)
         {
             var user = TCAdmin.SDK.Session.GetCurrentUser();
 
@@ -90,7 +90,7 @@ namespace TCAdminBatchSteamUpdate.Controllers
                 taskInfo.AddStep(step);
             }
 
-            var task = new Task(taskInfo.CreateTask().TaskId);
+            var task = new TCAdmin.TaskScheduler.SDK.Objects.Task(taskInfo.CreateTask().TaskId);
             task.Start();
 
             return task;

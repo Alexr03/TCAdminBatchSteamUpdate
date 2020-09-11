@@ -4,6 +4,6 @@ namespace TCAdminBatchSteamUpdate.Models
 {
     public class UpdateServicesModel
     {
-        public Task Task;
+        public TCAdmin.TaskScheduler.SDK.Objects.Task Task;
     }
 }

@@ -1,5 +1,5 @@
 ﻿{
-  "MinimumTcAdminVersion": "2.0.150.0",
+  "MinimumTcAdminVersion": "2.0.156.0",
   "SqlProfiles": {
     "InstallSql": "install.sql",
     "UpdateSql": "update.sql",
