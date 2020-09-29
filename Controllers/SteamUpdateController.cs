@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Web;
@@ -8,7 +7,6 @@ using TCAdmin.GameHosting.SDK.Objects;
 using TCAdmin.SDK.Database;
 using TCAdmin.SDK.Web.MVC.Controllers;
 using TCAdmin.TaskScheduler.ModuleApi;
-using TCAdmin.TaskScheduler.SDK.Objects;
 using TCAdminBatchSteamUpdate.HttpResponses;
 using TCAdminBatchSteamUpdate.Models;
 
@@ -19,17 +17,22 @@ namespace TCAdminBatchSteamUpdate.Controllers
     {
         public ActionResult Index()
         {
-            var user = TCAdmin.SDK.Session.GetCurrentUser();
-            var services = Service.GetServices(user, false).Cast<Service>().ToList();
+            var services = GetCurrentUserServices();
 
             services.RemoveAll(x => !new TCAdmin.GameHosting.SDK.Objects.Game(x.GameId).Steam.EnableSteamCmd);
+            services.RemoveAll(x => !x.GetPermission("SteamUpdate").CurrentUserHasPermission());
 
             var model = new SteamUpdateModel
             {
                 Services = services
             };
-
+            
             return View(model);
+        }
+
+        public static List<Service> GetCurrentUserServices()
+        {
+            return Service.GetServices().Cast<Service>().ToList();
         }
 
         [HttpPost]
@@ -45,12 +48,13 @@ namespace TCAdminBatchSteamUpdate.Controllers
 
             var servicesToUpdate = checkedNodes.Select(serviceId => new Service(serviceId))
                 .Where(service => service.GetPermission("SteamUpdate").CurrentUserHasPermission()).ToList();
-            
+
             var task = ScheduleSteamUpdates(servicesToUpdate);
 
             return new JsonHttpStatusResult(new
             {
-                url = $"/Aspx/Interface/TaskScheduler/TaskStatusPopup.aspx?taskid={task.TaskId}&redirect={HttpUtility.UrlEncode("/SteamUpdate")}"
+                url =
+                    $"/Aspx/Interface/TaskScheduler/TaskStatusPopup.aspx?taskid={task.TaskId}&redirect={HttpUtility.UrlEncode("/SteamUpdate")}"
             }, HttpStatusCode.OK);
         }
 
@@ -68,9 +72,8 @@ namespace TCAdminBatchSteamUpdate.Controllers
                 SourceId = "-1"
             };
 
-            foreach (var service in services)
-            {
-                var arguments = new XmlField
+            foreach (var step in from service in services
+                let arguments = new XmlField
                 {
                     ["ScheduledScript.ServiceId"] = service.ServiceId,
                     ["ScheduledScript.ScriptId"] = "steam",
@@ -78,15 +81,16 @@ namespace TCAdminBatchSteamUpdate.Controllers
                     ["ScheduledScript.WaitEmpty"] = false,
                     ["ScheduledScript.SkipExecution"] = false,
                     ["ScheduledScript.CheckSteamApiUpdate"] = false
-                };
-                var step = new StepInfo
+                }
+                select new StepInfo
                 {
                     ModuleId = "d3b2aa93-7e2b-4e0d-8080-67d14b2fa8a9",
                     ProcessId = 18,
                     ServerId = service.ServerId,
                     Arguments = arguments.ToString(),
                     DisplayName = $"Updating {service.ConnectionInfo} via Steam Update"
-                };
+                })
+            {
                 taskInfo.AddStep(step);
             }
 
