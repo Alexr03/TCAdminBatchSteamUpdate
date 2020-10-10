@@ -17,7 +17,7 @@ namespace TCAdminBatchSteamUpdate.Controllers
     {
         public ActionResult Index()
         {
-            var services = GetCurrentUserServices();
+            var services = Service.GetServices().Cast<Service>().ToList();
 
             services.RemoveAll(x => !new TCAdmin.GameHosting.SDK.Objects.Game(x.GameId).Steam.EnableSteamCmd);
             services.RemoveAll(x => !x.GetPermission("SteamUpdate").CurrentUserHasPermission());
@@ -28,11 +28,6 @@ namespace TCAdminBatchSteamUpdate.Controllers
             };
             
             return View(model);
-        }
-
-        public static List<Service> GetCurrentUserServices()
-        {
-            return Service.GetServices().Cast<Service>().ToList();
         }
 
         [HttpPost]
