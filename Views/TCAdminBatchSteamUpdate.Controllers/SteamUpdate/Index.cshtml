@@ -1,62 +1,118 @@
-﻿@model TCAdminBatchSteamUpdate.Models.SteamUpdateModel
+@model TCAdminBatchSteamUpdate.Models.SteamUpdateModel
 @using System.Web.Mvc.Ajax
 @using System.Web.Mvc.Html
 @using Kendo.Mvc.UI
 @using TCAdmin.SDK.Web.MVC.Extensions
 @{
     Layout = this.GetTemplateFile("Shared/Main.cshtml", true);
+
+    var uniquegames = Model.Services.OrderBy(x => x.GameName).Select(x => x.GameName).Distinct().ToList();
 }
 
 @section sidebar{
     @Html.Partial("_DefaultSidebar")
 }
 
-<div class="row">
-    <div class="col-4" style="font-size: 24px;">
-        <div id="form-window">
-            @using (Ajax.BeginForm("UpdateServices", "SteamUpdate", new AjaxOptions {OnSuccess = "onReceived", OnFailure = "onReceived", HttpMethod = "Post"}))
-            {
-                <label for="serviceIds">Check all services that you want to update:</label>
-                <input type="button" value="Check All" id="checkButton" onclick="toggleCheckAll()" class="k-button" />
-                @(Html.Kendo().TreeView()
-                    .Name("serviceIds")
-                    .Checkboxes(true)
-                    .BindTo(Model.Services.OrderBy(x => x.GameName).Select(x => new TreeViewItemModel
+<style>
+    #serviceIds li,
+    #taskOption li {
+        display: block !important;
+        padding: 4px 0px !important;
+    }
+</style>
+
+@using (Ajax.BeginForm("UpdateServices", "SteamUpdate", new AjaxOptions { OnSuccess = "onReceived", OnFailure = "onReceived", HttpMethod = "Post" }))
+{
+    <fieldset class="fieldset-form auto-focus">
+        <ul>
+            <li>
+                <dl>
+                    <p>
+                        <span>Which services do you want to update?</span>
+                        @(Html.Kendo().TreeView()
+                        .Name("serviceIds")
+                        .Checkboxes(true)
+                        .BindTo(Model.Services.OrderBy(x => x.GameName).Select(x => new TreeViewItemModel
+                        {
+                            Selected = false,
+                            Text = string.Format("{0} | {1}", x.ConnectionInfo, x.GameName),
+                            Id = x.ServiceId.ToString(),
+                        }))
+                        .AutoScroll(true)
+                        )
+                    </p>
+                    <p>
+                        @(Html.Kendo().ToolBar()
+                .Name("ToolBar")
+                .Events(e => e.Click("toggleCheckAll"))
+                .HtmlAttributes(new { style = "border: 0;padding: 0;background-color: unset;" })
+                .Items(items => {
+                    items.Add().Type(CommandType.SplitButton).Text("Check / Uncheck Services...").MenuButtons(menuButtons =>
                     {
-                        Selected = false,
-                        Text = string.Format("{0} | {1}", x.ConnectionInfo, x.GameName),
-                        Id = x.ServiceId.ToString(),
-                    }))
-                    .AutoScroll(true)
+                        menuButtons.Add().Text("All").Id("all");
+                        uniquegames.ForEach(x => menuButtons.Add().Text(x).Id("single-game"));
+                    });
+                }))
+                    </p>
+                </dl>
+            </li>
+            <li>
+                <p>
+                    <span>How many tasks should be created?</span>
+                    @(Html.Kendo().RadioGroup()
+                    .Name("taskOption")
+                    .Items(i =>
+                    {
+                        i.Add().Label("A single task for all services").Value("1");
+                        i.Add().Label("A task for each server").Value("2");
+                        if(TCAdmin.SDK.Web.Session.GetCurrentUser().UserType ==  TCAdmin.SDK.Objects.UserType.Admin || TCAdmin.SDK.Web.Session.GetCurrentUser().IsTopLevelSubAdmin())
+                        {
+                            i.Add().Label("A task for each service").Value("3");
+                        }
+                    })
+                    .Value("1")
                     )
-                <button class="k-button k-primary" type="submit" style="margin: 10px">Update Services</button>
-            }
+                </p>
+            </li>
+        </ul>
+        <div class="main-button-group">
+            <button class="k-button k-primary" type="submit" style="margin: 10px">Update Services</button>
         </div>
-    </div>
-</div>
+    </fieldset>
+}
 
 <script>
-    function onReceived(e){
+    function onReceived(e) {
         document.body.style.cursor = 'default';
-        if(e.responseJSON && e.responseJSON.Message){
+        if (e.responseJSON && e.responseJSON.Message) {
             TCAdmin.Ajax.ShowBasicDialog('Steam Update', e.responseJSON.Message);
             return;
         }
-        
-        if(e.url){
-            TCAdmin.Ajax.ShowUrlDialog('Steam Update', e.url, function(){ }, 600, 250);
+
+        if (e.url) {
+            if (e.dialog) {
+                TCAdmin.Ajax.ShowUrlDialog('Steam Update', e.url, function () { }, 600, 250);
+            } else {
+                window.location.href = e.url;
+            }
         }
     }
-    
-    function toggleCheckAll(){
-        const checkButtonValue = $("#checkButton").val();
-        
-        if(checkButtonValue === "Uncheck All"){
-          $("#serviceIds .k-checkbox-wrapper input").prop("checked", false).trigger("change");
-          $("#checkButton").val("Check All");
-        } else {
-          $("#serviceIds .k-checkbox-wrapper input").prop("checked", true).trigger("change");
-          $("#checkButton").val("Uncheck All");
+
+    function toggleCheckAll(e) {
+        switch (e.id) {
+            case "all":
+            case "single-game":
+                let gamename = e.item.options.text;
+                let treeview = $("#serviceIds").data("kendoTreeView");
+                $.each(treeview.items(), function (key, item) {
+                    if (e.id == "all" || item.innerText.endsWith(`| ${gamename}`)) {
+                        let cbx = $(item).find(".k-checkbox-wrapper input");
+                        cbx.prop("checked", !cbx.prop("checked"));
+                    }
+                });
+                break;
+            default:
+                e.target.next().click();
         }
     }
 </script>
