@@ -64,11 +64,11 @@
                     .Items(i =>
                     {
                         i.Add().Label("A single task for all services").Value("1");
-                        i.Add().Label("A task for each server").Value("2");
                         if(TCAdmin.SDK.Web.Session.GetCurrentUser().UserType ==  TCAdmin.SDK.Objects.UserType.Admin || TCAdmin.SDK.Web.Session.GetCurrentUser().IsTopLevelSubAdmin())
                         {
-                            i.Add().Label("A task for each service").Value("3");
+                            i.Add().Label("A task for each server").Value("2");
                         }
+                        i.Add().Label("A task for each service").Value("3");
                     })
                     .Value("1")
                     )
