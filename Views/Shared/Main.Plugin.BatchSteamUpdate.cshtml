@@ -6,10 +6,13 @@
     if (user.UserType != UserType.Admin)
     {
         var services = Service.GetServices().Cast<Service>().ToList();
-        anySteamGames = services.Any(x => x.Steam.EnableSteamCmd || x.Steam.EnableSteamUpdateTool);
-        if (services.Count == 0)
+        if (services.Count <= 1)
         {
             anySteamGames = false;
+        }
+        else
+        {
+            anySteamGames = services.Any(x => x.Steam.EnableSteamCmd || x.Steam.EnableSteamUpdateTool);
         }
     }
 }
@@ -18,7 +21,9 @@
 {
     <text>
         <style>
-            #page_d3b2aa93-7e2b-4e0d-8080-67d14b2fa8a9_1020 { display:none}
+            #page_d3b2aa93-7e2b-4e0d-8080-67d14b2fa8a9_1020 {
+                display: none
+            }
         </style>
     </text>
 }
